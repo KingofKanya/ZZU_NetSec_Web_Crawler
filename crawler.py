@@ -3,6 +3,7 @@ import os
 import database_operation
 import time
 import multiprocessing
+import threading
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -37,6 +38,15 @@ def choose(p):
         return announcements_url, announcements_params
 
 
+def add_to_database(url, params, page_number, p, currentPage):
+    params["currentPage"] = currentPage
+    resp = requests.post(url=url, params=params, headers=headers)
+    resp_json = resp.json()
+    data_list = resp_json["page"]["data"]
+    database_operation.save_to_database(data_list, p)
+    print(f"{p}第{currentPage}页数据保存完毕")
+
+
 def save_id(p):
     url, params = choose(p)
     print(f"------开始保存学院{p} id------")
@@ -44,14 +54,19 @@ def save_id(p):
     list_number = get_list_number(url, params)
     page_number = list_number // pageSize
     if list_number % page_number != 0: page_number += 1
-    print(f"总共有{page_number}页,共{list_number}个{p}")
+    print(f"{p}总共有{page_number}页,共{list_number}个{p}")
+    threads = []
     for currentPage in range(1, page_number + 1):
-        params["currentPage"] = currentPage
-        resp = requests.post(url=url, params=params, headers=headers)
-        resp_json = resp.json()
-        data_list = resp_json["page"]["data"]
-        database_operation.save_to_database(data_list, p)
-        print(f"第{currentPage}页数据保存完毕")
+        threads.append(
+            threading.Thread(target=add_to_database, args=(url, params, page_number, p, currentPage,))
+        )
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
     print(f"------学院{p} id保存完毕------")
 
 
