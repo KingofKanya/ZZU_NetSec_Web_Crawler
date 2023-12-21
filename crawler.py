@@ -43,6 +43,7 @@ def save_id(p):
     database_operation.delete_table(p)
     list_number = get_list_number(url, params)
     page_number = list_number // pageSize
+    if list_number % page_number != 0: page_number += 1
     print(f"总共有{page_number}页,共{list_number}个{p}")
     for currentPage in range(1, page_number + 1):
         params["currentPage"] = currentPage
