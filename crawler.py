@@ -1,6 +1,8 @@
 import requests
 import os
 import database_operation
+import time
+import multiprocessing
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -72,7 +74,7 @@ def save_page(p):
         fp = open(f"./{p}/{p}{i}.html", "a", encoding="utf-8")
         fp.write(f"<h1>{title}</h1><br><h3>{show_time}</h3><meta charset=\"UTF-8\">")
         fp.write(content)
-        print(f"第{i}个页面保存完毕")
+        print(f"{p}第{i}个页面保存完毕")
         i = i + 1
     print(f"------学院{p}页面保存完毕------")
 
@@ -82,6 +84,22 @@ def get_all(p):
     save_page(p)
 
 
+def execute_with_time(func, arg):
+    start_time = time.time()
+    func(arg)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"{func.__name__} 执行了 {execution_time} 秒")
+
+
 if __name__ == '__main__':
-    get_all("news")
-    get_all("announcements")
+    processes = []
+    categories = ["news", "announcements"]
+
+    for category in categories:
+        process = multiprocessing.Process(target=execute_with_time, args=(get_all, category))
+        processes.append(process)
+        process.start()
+
+    for process in processes:
+        process.join()

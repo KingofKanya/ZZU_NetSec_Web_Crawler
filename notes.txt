@@ -12,3 +12,10 @@ create table announcements(
     show_time varchar(20),
     title varchar(100)
 );
+
+
+
+
+33+17 --> 33
+
+之前是50秒
