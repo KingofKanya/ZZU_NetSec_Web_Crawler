@@ -22,6 +22,7 @@ announcements_params = {
     "currentPage": "1",
 }
 pageSize = 10
+i = 1
 
 
 def get_list_number(url, params):
@@ -70,7 +71,37 @@ def save_id(p):
     print(f"------学院{p} id保存完毕------")
 
 
+def generate_html(row, url, p):
+    global i, content
+    # row是一个元组，包含了每条数据的各个字段值
+    id, show_time, title = row  # python中的unpacking操作
+    resp = requests.post(url=url, params={
+        "id": id,
+    }, headers=headers)
+    # 重试机制
+    max_retries = 3
+    retry_count = 0
+    while resp.status_code != 200 and retry_count < max_retries:
+        print(f"重试中... 第 {retry_count + 1} 次重试")
+        time.sleep(5)  # 可以根据需要调整等待时间
+        resp = requests.post(url=url, params={"id": id}, headers=headers)
+        retry_count += 1
+
+    if resp.status_code == 200:
+        # 处理页面中的img,	http://softschool.zzu.edu.cn/file/showFile?fileId=4a453ec88ba53d71018c582400b60206
+        content = resp.json()["content"].replace("/file/showFile", "http://softschool.zzu.edu.cn/file/showFile")
+    else:
+        print(f"请求错误，状态码: {resp.status_code}")
+
+    fp = open(f"./{p}/{p}{i}.html", "a", encoding="utf-8")
+    fp.write(f"<h1>{title}</h1><br><h3>{show_time}</h3><meta charset=\"UTF-8\">")
+    fp.write(content)
+    print(f"{p}第{i}个页面保存完毕")
+    i = i + 1
+
+
 def save_page(p):
+    global i
     url = "http://softschool.zzu.edu.cn/front/article/getSingleArticleDetail"
     directory = f"./{p}/"
     # 检查目录是否存在，如果不存在则创建
@@ -79,19 +110,17 @@ def save_page(p):
     print(f"------开始保存学院{p}页面------")
     i = 1
     # 逐条读取数据
-    for row in database_operation.read_news_from_database(p):
-        # row是一个元组，包含了每条数据的各个字段值
-        id, show_time, title = row  # python中的unpacking操作
-        resp = requests.post(url=url, params={
-            "id": id,
-        }, headers=headers)
-        # 处理页面中的img,	http://softschool.zzu.edu.cn/file/showFile?fileId=4a453ec88ba53d71018c582400b60206
-        content = resp.json()["content"].replace("/file/showFile", "http://softschool.zzu.edu.cn/file/showFile")
-        fp = open(f"./{p}/{p}{i}.html", "a", encoding="utf-8")
-        fp.write(f"<h1>{title}</h1><br><h3>{show_time}</h3><meta charset=\"UTF-8\">")
-        fp.write(content)
-        print(f"{p}第{i}个页面保存完毕")
-        i = i + 1
+    rows = database_operation.read_news_from_database(p)
+    threads = []
+    for row in rows:
+        threads.append(
+            threading.Thread(target=generate_html, args=(row, url, p))
+        )
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
     print(f"------学院{p}页面保存完毕------")
 
 
