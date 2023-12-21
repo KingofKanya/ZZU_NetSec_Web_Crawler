@@ -1,0 +1,14 @@
+create database crawler;
+use crawler;
+
+create table news(
+    id varchar(50),
+    show_time varchar(20),
+    title varchar(100)
+);
+
+create table announcements(
+    id varchar(50),
+    show_time varchar(20),
+    title varchar(100)
+);

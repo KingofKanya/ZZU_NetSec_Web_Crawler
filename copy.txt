@@ -1,0 +1,76 @@
+import requests
+import os
+import database_operation
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
+                  'Chrome/119.0.0.0 Safari/537.36'
+}
+
+
+def get_list_number(url, params):
+    list_number = 0
+
+    return list_number
+
+
+def save_news_id():
+    print("------开始保存学院新闻id------")
+    url = "http://softschool.zzu.edu.cn/front/article/findArticleDetailList"
+    response = requests.post(url=url, params={
+        "typeId": "4028d3826efcc0fd016efcc7ccce0001",
+        "pageSize": "10",
+        "currentPage": "1",
+    }, headers=headers)
+    response_json = response.json()
+    list_number = response_json["page"]["total"]
+    pageSize = 10
+    database_operation.delete_news_table()
+    page_number = list_number // pageSize
+    print(f"总共有{page_number}页")
+    for currentPage in range(1, page_number + 1):
+        params = {
+            "typeId": "4028d3826efcc0fd016efcc7ccce0001",
+            "pageSize": "10",
+            "currentPage": currentPage,
+        }
+        resp = requests.post(url=url, params=params, headers=headers)
+        resp_json = resp.json()
+        data_list = resp_json["page"]["data"]
+        database_operation.save_to_database(data_list)
+        print(f"第{currentPage}页数据保存完毕")
+    print("------学院新闻id保存完毕------")
+
+
+def save_news_page():
+    directory = "./news/"
+    # 检查目录是否存在，如果不存在则创建
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    print("------开始保存学院新闻页面------")
+    url = "http://softschool.zzu.edu.cn/front/article/getSingleArticleDetail"
+    i = 1
+    # 逐条读取数据
+    for row in database_operation.read_news_from_database():
+        # row是一个元组，包含了每条数据的各个字段值
+        id, show_time, title = row  # python中的unpacking操作
+        resp = requests.post(url=url, params={
+            "id": id,
+        }, headers=headers)
+        # 处理页面中的img,	http://softschool.zzu.edu.cn/file/showFile?fileId=4a453ec88ba53d71018c582400b60206
+        news_content = resp.json()["content"].replace("/file/showFile", "http://softschool.zzu.edu.cn/file/showFile")
+        fp = open(f"./news/news{i}.html", "a", encoding="utf-8")
+        fp.write(f"<h1>{title}</h1><br><h3>{show_time}</h3><meta charset=\"UTF-8\">")
+        fp.write(news_content)
+        i = i + 1
+        print(f"第{i}个页面保存完毕")
+    print("------学院新闻页面保存完毕------")
+
+
+def get_all_news():
+    # save_news_id()
+    save_news_page()
+
+
+if __name__ == '__main__':
+    get_all_news()
