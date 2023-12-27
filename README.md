@@ -16,23 +16,23 @@
 
 在学院新闻网站点击第二页,浏览器向服务器发送了请求
 
-![image-20231227140346785](/Users/tom/Desktop/project/myCrawler/assets/image-20231227140346785.png)
+![image-20231227140346785](./assets/image-20231227140346785.png)
 
 请求路径
 
-![image-20231227140515146](/Users/tom/Desktop/project/myCrawler/assets/image-20231227140515146.png)
+![image-20231227140515146](./assets/image-20231227140515146.png)
 
 携带参数
 
-![image-20231227140535247](/Users/tom/Desktop/project/myCrawler/assets/image-20231227140535247.png)
+![image-20231227140535247](./assets/image-20231227140535247.png)
 
 返回的是一个包含每条信息的title和show_time等信息的json串
 
-![image-20231227140951414](/Users/tom/Desktop/project/myCrawler/assets/image-20231227140951414.png)
+![image-20231227140951414](./assets/image-20231227140951414.png)
 
 注意到这条新闻url后的id就是上面json串中的id
 
-![image-20231227140736680](/Users/tom/Desktop/project/myCrawler/assets/image-20231227140736680.png)
+![image-20231227140736680](./assets/image-20231227140736680.png)
 
 由此能直接向服务器发起get请求,携带id参数
 
